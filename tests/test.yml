@@ -17,7 +17,7 @@
             groups:
               - ipsum
               - lorem
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
           - name: dolor.ament
             groups:
               - ipsum
@@ -38,7 +38,7 @@
       users_and_groups:
         users:
           - name: nemo.enim
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
 
     - role: sansible.users_and_groups
       users_and_groups:
@@ -48,7 +48,7 @@
           - name: iste.natus
             group: voluptatem
             home: /penates
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
 
     - role: sansible.users_and_groups
       users_and_groups:
@@ -58,7 +58,7 @@
         users:
           - name: adipiscing.elit
             group: voluptatem
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
 
     # Check whitelist groups
     - role: sansible.users_and_groups
@@ -77,13 +77,13 @@
           # user in whitelist with group set
           - name: whitelistedgroup.user
             group: whitelist
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
           # user in whitelist with groups set
           - name: whitelistedgroups.user
             groups:
               - nonwhitelist
               - whitelist
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
         whitelist_groups:
           - whitelist
 

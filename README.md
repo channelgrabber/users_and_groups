@@ -74,7 +74,7 @@ Simple example for creating two users and two groups.
             groups:
               - ipsum
               - lorem
-            ssh_key: ./lorem.ipsum.pub
+            authorized_keys_file: ./lorem.ipsum.pub
           - name: dolor.ament
             groups:
               - ipsum

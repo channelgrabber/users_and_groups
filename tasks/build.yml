@@ -90,12 +90,12 @@
   become: yes
   authorized_key:
     user: "{{ item.name }}"
-    key: "{{ lookup('file', item.ssh_key) }}"
+    key: "{{ lookup('file', item.authorized_keys_file) }}"
     manage_dir: yes
   with_items: "{{ users_and_groups.users }}"
   when: (users_and_groups.authorized_keys_dir is none)
     and (item.state is not defined or item.state != "absent")
-    and (item.ssh_key is defined)
+    and (item.authorized_keys_file is defined)
     and (
       (not users_and_groups.whitelist_groups)
       or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
@@ -116,7 +116,19 @@
   become: yes
   authorized_key:
     user: "{{ item.name }}"
-    key: "{{ lookup('file', item.ssh_key) }}"
+    key: "{{ lookup('file', item.authorized_keys_file) }}"
+    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.name }}"
+    manage_dir: no
+  with_items: "{{ users_and_groups.users }}"
+  when: (users_and_groups.authorized_keys_dir is not none)
+    and (item.state is not defined or item.state != "absent")
+    and (item.authorized_keys_file is defined)
+    and (
+      (not users_and_groups.whitelist_groups)
+      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
+      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
+    )
+
     path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.name }}"
     manage_dir: no
   with_items: "{{ users_and_groups.users }}"
