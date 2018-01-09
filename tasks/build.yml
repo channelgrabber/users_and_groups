@@ -155,20 +155,19 @@
 - name: Add ssh auth keys to default user home directory from list
   become: yes
   authorized_key:
-    user: "{{ item.0.name }}"
-    key: "{{ item.1 }}"
+    user: "{{ item.name }}"
+    key: "{{ item.authorized_key }}"
     manage_dir: yes
-  with_subelements:
+  with_items:
     - "{{ users_and_groups.users }}"
-    - authorized_keys
-  when: ( users_and_groups.authorized_keys_dir is none)
-    and (item.0.state is not defined or item.0.state != "absent")
-    and (item.0.authorized_keys is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
-    )
+  # when: ( users_and_groups.authorized_keys_dir is none)
+  #   and (item.0.state is not defined or item.0.state != "absent")
+  #   and (item.0.authorized_keys is defined)
+  #   and (
+  #     (not users_and_groups.whitelist_groups)
+  #     or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
+  #     or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
+  #   )
 
 - name: Add ssh auth keys to alternate authorized_keys directory from list
   become: yes
@@ -180,11 +179,11 @@
     with_subelements:
       - "{{ users_and_groups.users }}"
       - authorized_keys
-  when: (users_and_groups.authorized_keys_dir is not none)
-    and (item.0.state is not defined or item.0.state != "absent")
-    and (item.0.authorized_keys is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
-    )
+  # when: (users_and_groups.authorized_keys_dir is not none)
+  #   and (item.0.state is not defined or item.0.state != "absent")
+  #   and (item.0.authorized_keys is defined)
+  #   and (
+  #     (not users_and_groups.whitelist_groups)
+  #     or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
+  #     or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
+  #   )
