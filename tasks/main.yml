@@ -1,7 +1,7 @@
 ---
 
 - name: Ensures users and groups
-  include: build.yml
+  include_tasks: build.yml
   tags:
     - build
     - maintain
