@@ -61,10 +61,19 @@
     state: "{{ item.state | default(omit) }}"
     system: "{{ item.system | default(omit) }}"
     uid: "{{ item.uid | default(omit) }}"
+  register: item.created
   with_items: "{{ users_and_groups.users }}"
   when: (not users_and_groups.whitelist_groups)
     or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
     or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
+
+- name: Force new users to create a password on first login
+  become: yes
+  command: "chage -d 0 {{ item.name }}""
+  with_items: "{{ users_and_groups.users }}"
+  when: ( item.created.changed )
+    and (item.password is not defined )
+    and ( item.state != "absent" )
 
 - name: Update home directory permissions
   become: yes
