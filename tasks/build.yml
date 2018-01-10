@@ -6,7 +6,7 @@
   when: (users_and_groups.authorized_keys_dir is not none)
     and (item.state is not defined or item.state != "absent")
     and (item.authorized_keys_file is defined)
-    and (item.authorized_keys is defined)
+    and (item.authorized_key is defined)
     and (
       (not users_and_groups.whitelist_groups)
       or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
@@ -46,85 +46,6 @@
     dest: "/etc/sudoers.d/{{ item.name }}"
   with_items: "{{ users_and_groups.sudoers }}"
 
-- name: Manage systems users
-  become: yes
-  user:
-    comment: "{{ item.gecos | default(item.name) }}"
-    createhome: "{{ item.createhome | default('yes') }}"
-    home: "{{ item.home | default('/home/' ~ item.name) }}"
-    group: "{{ item.group | default(omit) }}"
-    groups: "{{ item.groups | default([ ]) | join(',') | default(omit) }}"
-    name: "{{ item.name }}"
-    password: "{{ item.password | default(omit) }}"
-    remove: "{{ 'yes' if item.state is defined and item.state == 'absent' else 'no' }}"
-    shell: "{{ item.shell | default('/bin/bash') }}"
-    state: "{{ item.state | default(omit) }}"
-    system: "{{ item.system | default(omit) }}"
-    uid: "{{ item.uid | default(omit) }}"
-  register: item.created
-  with_items: "{{ users_and_groups.users }}"
-  when: (not users_and_groups.whitelist_groups)
-    or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-    or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
-
-- name: Force new users to create a password on first login
-  become: yes
-  command: "chage -d 0 {{ item.name }}""
-  with_items: "{{ users_and_groups.users }}"
-  when: ( item.created.changed )
-    and (item.password is not defined )
-    and ( item.state != "absent" )
-
-- name: Update home directory permissions
-  become: yes
-  file:
-    group: "{{ item.group | default(omit) }}"
-    mode: 0750
-    owner: "{{ item.name }}"
-    path: "{{ item.home | default('/home/' ~ item.name) }}"
-    state: directory
-  with_items: "{{ users_and_groups.users }}"
-  when: (item.state is not defined or item.state != "absent")
-    and (item.createhome is not defined or item.createhome)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
-    )
-
-- name: Create .ssh directory in default user home directory
-  become: yes
-  file:
-    path: /home/{{ item.name }}/.ssh
-    owner: "{{ item.name }}"
-    group: "{{ item.group | default(omit) }}"
-    mode: 0700
-    state: directory
-  with_items: "{{ users_and_groups.users }}"
-  when: (users_and_groups.authorized_keys_dir is none)
-    and (item.state is not defined or item.state != "absent")
-    and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
-    )
-
-- name: Copy ssh auth keys to default user home directory
-  become: yes
-  authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ lookup('file', item.authorized_keys_file) }}"
-    manage_dir: yes
-  with_items: "{{ users_and_groups.users }}"
-  when: (users_and_groups.authorized_keys_dir is none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys_file is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
-    )
-
 - name: Create alternate authorized_keys directory
   become: yes
   file:
@@ -135,55 +56,6 @@
     state: directory
   when: users_and_groups.authorized_keys_dir is not none
 
-- name: Copy ssh auth keys to alternate authorized_keys directory
-  become: yes
-  authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ lookup('file', item.authorized_keys_file) }}"
-    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.name }}"
-    manage_dir: no
+- name: Create users
+  include_tasks: create_user.yml
   with_items: "{{ users_and_groups.users }}"
-  when: (users_and_groups.authorized_keys_dir is not none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys_file is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
-    )
-
-- name: Add ssh auth keys to default user home directory from list
-  become: yes
-  authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ item.authorized_key }}"
-    manage_dir: yes
-  with_items:
-    - "{{ users_and_groups.users }}"
-  # when: ( users_and_groups.authorized_keys_dir is none)
-  #   and (item.0.state is not defined or item.0.state != "absent")
-  #   and (item.0.authorized_keys is defined)
-  #   and (
-  #     (not users_and_groups.whitelist_groups)
-  #     or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
-  #     or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
-  #   )
-
-- name: Add ssh auth keys to alternate authorized_keys directory from list
-  become: yes
-  authorized_key:
-    user: "{{ item.0.name }}"
-    key: "{{ item.1 }}"
-    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.0.name }}"
-    manage_dir: no
-    with_subelements:
-      - "{{ users_and_groups.users }}"
-      - authorized_keys
-  # when: (users_and_groups.authorized_keys_dir is not none)
-  #   and (item.0.state is not defined or item.0.state != "absent")
-  #   and (item.0.authorized_keys is defined)
-  #   and (
-  #     (not users_and_groups.whitelist_groups)
-  #     or (item.0.groups is defined and (item.0.groups | intersect(users_and_groups.whitelist_groups)))
-  #     or (item.0.group is defined and item.0.group in users_and_groups.whitelist_groups)
-  #   )
