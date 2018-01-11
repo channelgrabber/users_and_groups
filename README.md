@@ -66,15 +66,22 @@ Simple example for creating two users and two groups.
     - name: sansible.users_and_groups
       users_and_groups:
         groups:
-          - name: lorem
+          lorem: # This is the group name
             system: yes
           - name: ipsum
         users:
-          - name: lorem.ipsum
+          lorem_ipsum:
+            name: lorem.ipsum # This will override the key as the username if it is set
             groups:
               - ipsum
               - lorem
             authorized_keys_file: ./lorem.ipsum.pub
+            dolor_sit:
+              groups:
+                - ipsum
+                - lorem
+              authorized_keys:
+                - ssh-rsa APUBLICSSHKEY
           - name: dolor.ament
             groups:
               - ipsum
@@ -91,9 +98,10 @@ Creating a jailed SFTP user (cf [here](https://wiki.archlinux.org/index.php/SFTP
       users_and_groups:
         authorized_keys_dir: /etc/ssh/authorized_keys
         groups:
-          - name: sftp_only
+          sftp_only:
+            - name: sftp_only
         users:
-          - name: sftp
+          sftp:
             group: sftp_only
             home: /mnt/sftp_vol
 ```
@@ -141,7 +149,7 @@ Add selected group to sudoers
     - name: sansible.users_and_groups
       users_and_groups:
         sudoers:
-          - name: wheel
+          wheel:
             user: "%wheel"
             runas: "ALL=(ALL)"
             commands: "NOPASSWD: ALL"
@@ -158,15 +166,18 @@ Var file with users:
 
 users_and_groups:
   groups:
-    - name: admins
-    - name: developer_group_alpha
-    - name: developer_group_beta
+    admins:
+    developer_group_alpha:
+    developer_group_beta:
   users:
-    - name: admin.user
+    admin_user:
+      name: admin.user
       group: admins
-    - name: alpha.user
+    alpha_user:
+      name: alpha.user
       group: alpha_develops
-    - name: beta.user
+    beta_user:
+      name: beta.user
       group: developer_group_beta
 ```
 
@@ -214,4 +225,3 @@ In a service role:
 
     - role: alpha_service
 ```
-

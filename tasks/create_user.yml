@@ -2,51 +2,51 @@
 - name: Manage systems users
   become: yes
   user:
-    comment: "{{ item.gecos | default(item.name) }}"
-    createhome: "{{ item.createhome | default('yes') }}"
-    home: "{{ item.home | default('/home/' ~ item.name) }}"
-    group: "{{ item.group | default(omit) }}"
-    groups: "{{ item.groups | default([ ]) | join(',') | default(omit) }}"
-    name: "{{ item.name }}"
-    password: "{{ item.password | default(omit) }}"
-    remove: "{{ 'yes' if item.state is defined and item.state == 'absent' else 'no' }}"
-    shell: "{{ item.shell | default('/bin/bash') }}"
-    state: "{{ item.state | default(omit) }}"
-    system: "{{ item.system | default(omit) }}"
-    uid: "{{ item.uid | default(omit) }}"
+    comment: "{{ item.value.gecos | default(item.key) }}"
+    createhome: "{{ item.value.createhome | default('yes') }}"
+    home: "{{ item.value.home | default('/home/' ~ item.key) }}"
+    group: "{{ item.value.group | default(omit) }}"
+    groups: "{{ item.value.groups | default([ ]) | join(',') | default(omit) }}"
+    name: "{{ item.value.name | default(item.key) }}"
+    password: "{{ item.value.password | default(omit) }}"
+    remove: "{{ 'yes' if item.value.state is defined and item.value.state == 'absent' else 'no' }}"
+    shell: "{{ item.value.shell | default('/bin/bash') }}"
+    state: "{{ item.value.state | default(omit) }}"
+    system: "{{ item.value.system | default(omit) }}"
+    uid: "{{ item.value.uid | default(omit) }}"
   when: (not users_and_groups.whitelist_groups)
-    or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-    or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
+    or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
+    or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
 
 - name: Check if user has password
-  shell: passwd --status {{ item.name }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
+  shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
   ignore_errors: yes
   register: user_has_no_password
   changed_when: user_has_no_password.rc > 0
-  when: ( item.password is not defined )
+  when: ( item.value.password is not defined )
     and (
-      ( item.state is not defined )
-      or ( item.state != "absent" )
+      ( item.value.state is not defined )
+      or ( item.value.state != "absent" )
     )
 
 - name: Reset user's locked or absent password
   become: yes
-  command: "usermod -p '{{ item.password|default()}}' {{ item.name }}"
-  when: ( item.password is not defined )
+  command: "usermod -p '{{ item.value.password|default()}}' {{ item.value.name | default(item.key) }}"
+  when: ( item.value.password is not defined )
     and (
-      ( item.state is not defined )
-      or ( item.state != "absent" )
+      ( item.value.state is not defined )
+      or ( item.value.state != "absent" )
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
 
 - name: Expire new user's password to prompt creation
   become: yes
-  command: "chage -d 0 {{ item.name }}"
-  when: ( item.password is not defined )
+  command: "chage -d 0 {{ item.value.name | default(item.key) }}"
+  when: ( item.value.password is not defined )
     and (
-      ( item.state is not defined )
-      or ( item.state != "absent" )
+      ( item.value.state is not defined )
+      or ( item.value.state != "absent" )
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
@@ -54,96 +54,96 @@
 - name: Update home directory permissions
   become: yes
   file:
-    group: "{{ item.group | default(omit) }}"
+    group: "{{ item.value.group | default(omit) }}"
     mode: 0750
-    owner: "{{ item.name }}"
-    path: "{{ item.home | default('/home/' ~ item.name) }}"
+    owner: "{{ item.value.name | default(item.key) }}"
+    path: "{{ item.value.home | default('/home/' ~ item.key) }}"
     state: directory
-  when: (item.state is not defined or item.state != "absent")
-    and (item.createhome is not defined or item.createhome)
+  when: (item.value.state is not defined or item.value.state != "absent")
+    and (item.value.createhome is not defined or item.value.createhome)
     and (
       (not users_and_groups.whitelist_groups)
-      or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
+      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
 
 - name: Create .ssh directory in default user home directory
   become: yes
   file:
-    path: /home/{{ item.name }}/.ssh
-    owner: "{{ item.name }}"
-    group: "{{ item.group | default(omit) }}"
+    path: /home/{{ item.value.name | default(item.key) }}/.ssh
+    owner: "{{ item.value.name | default(item.key) }}"
+    group: "{{ item.value.group | default(omit) }}"
     mode: 0700
     state: directory
   when: (users_and_groups.authorized_keys_dir is none)
-    and (item.state is not defined or item.state != "absent")
+    and (item.value.state is not defined or item.value.state != "absent")
     and (
       (not users_and_groups.whitelist_groups)
-      or ( item.groups is defined and ( item.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
+      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
 
 - name: Copy ssh auth keys to default user home directory
   become: yes
   authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ lookup('file', item.authorized_keys_file) }}"
+    user: "{{ item.value.name | default(item.key) }}"
+    key: "{{ lookup('file', item.value.authorized_keys_file) }}"
     manage_dir: yes
   when: (users_and_groups.authorized_keys_dir is none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys_file is defined)
+    and (item.value.state is not defined or item.value.state != "absent")
+    and (item.value.authorized_keys_file is defined)
     and (
       (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
+      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
 
 - name: Copy ssh auth keys to alternate authorized_keys directory
   become: yes
   authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ lookup('file', item.authorized_keys_file) }}"
-    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.name }}"
+    user: "{{ item.value.name | default(item.key) }}"
+    key: "{{ lookup('file', item.value.authorized_keys_file) }}"
+    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
     manage_dir: no
   when: (users_and_groups.authorized_keys_dir is not none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys_file is defined)
+    and (item.value.state is not defined or item.value.state != "absent")
+    and (item.value.authorized_keys_file is defined)
     and (
       (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
+      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
 
 - name: Add ssh auth keys to default user home directory from list
   become: yes
   template:
     src: authorized_keys.j2
-    dest: "/home/{{ item.name }}/.ssh/authorized_keys"
-    owner: "{{ item.name }}"
-    group: "{{ item.group | default(omit) }}"
+    dest: "/home/{{ item.value.name | default(item.key) }}/.ssh/authorized_keys"
+    owner: "{{ item.value.name | default(item.key) }}"
+    group: "{{ item.value.group | default(omit) }}"
     mode: 0660
   when: ( users_and_groups.authorized_keys_dir is none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys is defined)
+    and (item.value.state is not defined or item.value.state != "absent")
+    and (item.value.authorized_keys is defined)
     and (
       (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
+      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
 
 - name: Add ssh auth keys to alternate authorized_keys directory from list
   become: yes
   template:
     src: authorized_keys.j2
-    dest: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ item.name }}"
-    owner: "{{ item.name }}"
-    group: "{{ item.group | default(omit) }}"
+    dest: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
+    owner: "{{ item.value.name | default(item.key) }}"
+    group: "{{ item.value.group | default(omit) }}"
     mode: 0660
   when: (users_and_groups.authorized_keys_dir is not none)
-    and (item.state is not defined or item.state != "absent")
-    and (item.authorized_keys is defined)
+    and (item.value.state is not defined or item.value.state != "absent")
+    and (item.value.authorized_keys is defined)
     and (
       (not users_and_groups.whitelist_groups)
-      or (item.groups is defined and (item.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.group is defined and item.group in users_and_groups.whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
+      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
