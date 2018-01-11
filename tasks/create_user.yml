@@ -17,6 +17,8 @@
   when: (not users_and_groups.whitelist_groups)
     or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
     or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+  tags:
+    - configuration
 
 - name: Check if user has password
   shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
@@ -27,6 +29,8 @@
     and (
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
+    tags:
+      - configuration
     )
 
 - name: Reset user's locked or absent password
@@ -39,6 +43,8 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+  tags:
+    - configuration
 
 - name: Expire new user's password to prompt creation
   become: yes
@@ -50,6 +56,8 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+  tags:
+    - configuration
 
 - name: Update home directory permissions
   become: yes
@@ -66,6 +74,8 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
 
 - name: Create .ssh directory in default user home directory
   become: yes
@@ -82,6 +92,8 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
 
 - name: Copy ssh auth keys to default user home directory
   become: yes
@@ -97,6 +109,8 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
 
 - name: Copy ssh auth keys to alternate authorized_keys directory
   become: yes
@@ -113,6 +127,8 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
 
 - name: Add ssh auth keys to default user home directory from list
   become: yes
@@ -130,6 +146,8 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
 
 - name: Add ssh auth keys to alternate authorized_keys directory from list
   become: yes
@@ -147,3 +165,5 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+  tags:
+    - configuration
