@@ -29,9 +29,9 @@
     and (
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
-    tags:
-      - configuration
     )
+  tags:
+    - configuration
 
 - name: Reset user's locked or absent password
   become: yes
