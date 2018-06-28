@@ -47,7 +47,7 @@
   tags:
     - install
 
-- name: Create sudoers configure
+- name: Create sudoers config
   become: yes
   template:
     src: sudoers.j2
