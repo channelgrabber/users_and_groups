@@ -2,4 +2,4 @@
 # {{ ansible_managed }}
 #
 Defaults:%sudo !requiretty
-{{ item.user }}  {{ item.runas }}  {{ item.commands }}
+{{ item.value.user }}  {{ item.value.runas }}  {{ item.value.commands }}
