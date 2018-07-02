@@ -31,9 +31,9 @@
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
     )
+    and ( user_created.changed )
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Reset {{ item.value.name | default(item.key) }}'s locked or absent password
   become: yes
@@ -45,9 +45,9 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+    and ( user_created.changed )
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Expire new {{ item.value.name | default(item.key) }}'s password to prompt creation
   become: yes
@@ -59,9 +59,9 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+    and ( user_created.changed )
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Update {{ item.value.name | default(item.key) }}'s' home directory permissions
   become: yes
@@ -78,9 +78,9 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+    and ( user_created.changed )
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Create .ssh directory in default {{ item.value.name | default(item.key) }} home directory
   become: yes
@@ -97,9 +97,9 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
+    and ( user_created.changed )
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Copy ssh auth key file to default location
   become: yes
