@@ -44,6 +44,7 @@
       or ( item.value.state != "absent" )
     )
     and ( user_has_no_password is defined )
+    and ( user_has_no_password.rc is defined)
     and ( user_has_no_password.rc == 0 )
     and ( user_created.changed )
   tags:
@@ -58,12 +59,13 @@
       or ( item.value.state != "absent" )
     )
     and ( user_has_no_password is defined )
+    and ( user_has_no_password.skipped is not defined or user_has_no_password.skipped == false )
     and ( user_has_no_password.rc == 0 )
     and ( user_created.changed )
   tags:
     - configuration
 
-- name: Update {{ item.value.name | default(item.key) }}'s' home directory permissions
+- name: Update {{ item.value.name | default(item.key) }}'s home directory permissions
   become: yes
   file:
     group: "{{ item.value.group | default(omit) }}"
