@@ -26,42 +26,29 @@
   ignore_errors: yes
   register: user_has_no_password
   changed_when: user_has_no_password.rc > 0
-  when: ( item.value.password is not defined )
-    and (
-      ( item.value.state is not defined )
-      or ( item.value.state != "absent" )
-    )
-    and ( user_created.changed )
+  when: ( user_created is defined and user_created.changed )
+    and ( item.value.password is not defined )
+    and ( item.value.state is not defined  or item.value.state != "absent" )
   tags:
     - configuration
 
 - name: Reset {{ item.value.name | default(item.key) }}'s locked or absent password
   become: yes
   command: "usermod -p '{{ item.value.password|default()}}' {{ item.value.name | default(item.key) }}"
-  when: ( item.value.password is not defined )
-    and (
-      ( item.value.state is not defined )
-      or ( item.value.state != "absent" )
-    )
-    and ( user_has_no_password is defined )
-    and ( user_has_no_password.rc is defined)
-    and ( user_has_no_password.rc == 0 )
-    and ( user_created.changed )
+  when: ( user_created is defined and user_created.changed )
+    and ( item.value.password is not defined )
+    and ( item.value.state is not defined or item.value.state != "absent" )
+    and ( user_has_no_password is defined and user_has_no_password.rc == 0 )
   tags:
     - configuration
 
 - name: Expire new {{ item.value.name | default(item.key) }}'s password to prompt creation
   become: yes
   command: "chage -d 0 {{ item.value.name | default(item.key) }}"
-  when: ( item.value.password is not defined )
-    and (
-      ( item.value.state is not defined )
-      or ( item.value.state != "absent" )
-    )
-    and ( user_has_no_password is defined )
-    and ( user_has_no_password.skipped is not defined or user_has_no_password.skipped == false )
-    and ( user_has_no_password.rc == 0 )
-    and ( user_created.changed )
+  when: ( user_created is defined and user_created.changed )
+    and ( item.value.password is not defined )
+    and ( item.value.state is not defined or item.value.state != "absent" )
+    and ( user_has_no_password is defined and user_has_no_password.rc == 0 )
   tags:
     - configuration
 
@@ -73,33 +60,33 @@
     owner: "{{ item.value.name | default(item.key) }}"
     path: "{{ item.value.home | default('/home/' ~ item.key) }}"
     state: directory
-  when: (item.value.state is not defined or item.value.state != "absent")
+  when: ( user_created is defined and user_created.changed )
+    and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.createhome is not defined or item.value.createhome)
     and (
       (not users_and_groups.whitelist_groups)
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-    and ( user_created.changed )
   tags:
     - configuration
 
 - name: Create .ssh directory in default {{ item.value.name | default(item.key) }} home directory
   become: yes
   file:
-    path: /home/{{ item.value.name | default(item.key) }}/.ssh
+    path: "{{ item.value.home | default('/home/' ~ item.key) }}/.ssh"
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0700
     state: directory
-  when: (users_and_groups.authorized_keys_dir is none)
+  when: ( user_created is defined and user_created.changed )
+    and (users_and_groups.authorized_keys_dir is none)
     and (item.value.state is not defined or item.value.state != "absent")
     and (
       (not users_and_groups.whitelist_groups)
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-    and ( user_created.changed )
   tags:
     - configuration
 
@@ -142,7 +129,7 @@
   become: yes
   template:
     src: authorized_keys.j2
-    dest: "/home/{{ item.value.name | default(item.key) }}/.ssh/authorized_keys"
+    dest: "{{ item.value.home | default('/home/' ~ item.key) }}/.ssh/authorized_keys"
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
